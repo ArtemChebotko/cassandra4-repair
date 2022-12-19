@@ -13,16 +13,16 @@
     <div class="container px-4 py-2">
      <div class="row g-4 py-2 row-cols-1 row-cols-lg-1">
       <div class="feature col div-choice">
-            <div class="scenario-description">Learn how to use full query logging in Apache Cassandra®.</div>
+            <div class="scenario-description">Learn how to manage incremental repair in Apache Cassandra®.</div>
             <ul>
               <li><span class="scenario-description-attribute">Difficulty</span>: Intermediate</li>
               <li><span class="scenario-description-attribute">Time</span>: 25 minutes</li>
             </ul>
             <div class="scenario-objectives">In this hands-on lab, you will:</div>
             <ul>
-              <li><span class="scenario-objective">Enable and disable full query logging statically (in <code>cassandra.yaml</code>) and dynamically (using <code>nodetool</code>)</span></li>
-              <li><span class="scenario-objective">Learn features of the full query logging tool <code>fqltool</code></span></li>
-              <li><span class="scenario-objective">Read and interpret full query logs</span></li>
+              <li><span class="scenario-objective">Populate a small cluster with data and introduce the need for repair</span></li>
+              <li><span class="scenario-objective">Execute incremental repair and observe the data being reconciled between nodes</span></li>
+              <li><span class="scenario-objective">Learn how to manage repairs on a Cassandra cluster</span></li>
             </ul>
       </div>
      </div>

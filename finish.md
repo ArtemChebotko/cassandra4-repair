@@ -24,9 +24,9 @@
         <br/>
         <div class="scenario-objectives">In this hands-on lab, you learned about:</div>
         <ul>
-              <li><span class="scenario-objective">Enabling and disabling full query logging</span></li>
-              <li><span class="scenario-objective">Features of the full query logging tool <code>fqltool</code></span></li>
-              <li><span class="scenario-objective">Reading and interpreting full query logs</span></li>              
+              <li><span class="scenario-objective">Populating a small cluster with data and introducing the need for repair</span></li>
+              <li><span class="scenario-objective">Executing incremental repair and observing the data being reconciled between nodes</span></li>
+              <li><span class="scenario-objective">Managing repairs on a Cassandra cluster</span></li>       
         </ul>
         <div class="resources">Learn more about Cassandra on <a href="https://datastax.com/dev" target="_blank">datastax.com/dev</a>:</div>
         <ul>

@@ -9,7 +9,7 @@ and ready for use in production.
 **In this hands-on lab, you will:**
 - Populate a small cluster with data and introduce the need for repair
 - Execute incremental repair and observe the data being reconciled between nodes
-- Learn how to manage repairs on a Cassandra cluster.
+- Learn how to manage repairs on a Cassandra cluster
 
 _This hands-on lab is available on our [https://www.datastax.com/learn/whats-new-for-cassandra-4](https://www.datastax.com/learn/whats-new-for-cassandra-4) site, where you can find many more resources to help you succeed with Apache Cassandra._
 
