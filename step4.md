@@ -51,9 +51,8 @@ preventing the "overstreaming explosions" that could occur in previous versions.
 Both the transaction around the repair process and the existence of three
 separate pools of SSTables are improvements introduced in Cassandra 4.0.
 
-Enough with the theory - let's look at the SSTables on Node2 now and at their
-"repair status", as we did in Step 2, by running
-the following on the console of Node2:
+Enough with the theory - let's look at the SSTable on the `Cassandra-2` node now and at its
+"repair status".
 
 ✅ Inspect SSTables on the `Cassandra-2` node: 
 ```
@@ -88,7 +87,7 @@ past repair operations, and can be also used to stop a running repair
 (on the same node it is executed on, but also on another node with a `--force`
 option).
 
-✅ Run the following command on the console of Node2 to see the repair you just
+✅ Run the following command on the `Cassandra-2` node to see the repair you just
 performed (withouth the `--all` flag you would only see currently-running repairs):
 ```
 ### cassandra2
@@ -123,7 +122,7 @@ CONSISTENCY LOCAL_ONE;
 SELECT * FROM chemistry.elements;"
 ```
 
-If you see just a handful of gaseous elements, congratulations! Consistency
+If you see just a handful of gaseous elements on both nodes, congratulations! Consistency
 has been successfully restored by bringing the latest changes on the table
 from `Cassandra-1` over to `Cassandra-2`: **incremental repair has done its job**.
 
