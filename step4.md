@@ -20,42 +20,121 @@
 
 <!-- CONTENT -->
 
-<div class="step-title">Configure full query logging via cassandra.yaml</div>
+<div class="step-title">Run incremental repair</div>
 
-Previously, you enabled full query logging for a Cassandra node using `nodetool`, but the logging will not remain enabled when the node is restarted unless you edit the `cassandra.yaml` file. In this step, you will learn how to configure some of the properties full query logging. 
+We will launch an incremental repair on `Cassandra-2`, expecting that
+it will be able to restore consistency and align its SSTables to
+reflect the deletion of non-gaseous elements we executed on `Cassandra-1`.
 
-✅ Open the `cassandra.yaml` file in the editor:
+✅ Start incremental repair on the `Cassandra-2` node:
 ```
-nano $HOME/apache-cassandra/conf/cassandra.yaml
+### cassandra2
+docker exec -i -t Cassandra-2 nodetool repair chemistry elements
 ```
 
-✅ Find the line that contains `#full_query_logging_options:` and uncomment it and following lines with related configuration properties. Change `log_dir` to point to the `/tmp/fqllogs` directory. Your edited file may look like this:
+Given our extremely small volumes of data (about a hundred rows and a hundred tombstones), 
+it will take a couple of seconds or so. 
+Look for "completed successfully" in the output.
 
+So it looks like the data was repaired! Since this cluster is running
+Cassandra 4.0, _during_ repair the involved SSTables were kept in a separate
+"pending-repair" pool, protected from compaction.
+
+The whole repair process (that in real clusters may last much longer) is
+coordinated among nodes with a transaction: at the end, the newly-created
+SSTables are either moved to the "repaired" pool or, in case of failure,
+rolled back to the "non-repaired" state. In any case, huge undeserved
+misalignments between nodes are kept to a minimum and limited to cases of actual
+data mismatch (and not simple placement in different SSTable pools), thus
+preventing the "overstreaming explosions" that could occur in previous versions.
+
+Both the transaction around the repair process and the existence of three
+separate pools of SSTables are improvements introduced in Cassandra 4.0.
+
+Enough with the theory - let's look at the SSTables on Node2 now and at their
+"repair status", as we did in Step 2, by running
+the following on the console of Node2:
+
+✅ Inspect SSTables on the `Cassandra-2` node: 
+```
+### cassandra2
+docker exec -i -t Cassandra-2 bash -c '/opt/cassandra/tools/bin/sstablemetadata /var/lib/cassandra/data/chemistry/elements-*/*-Data.db'
+```
+
+You should see that the SSTable is marked as "repaired" in the output, as in:
 <pre class="non-executable-code">
-full_query_logging_options:
-    log_dir: /tmp/fqllogs
-    roll_cycle: HOURLY
-    block: true
-    max_queue_weight: 268435456 # 256 MiB
-    max_log_size: 17179869184 # 16 GiB
-    ## archive command is "/path/to/script.sh %path" where %path is replaced with the file being rolled:
-    # archive_command:
-    # max_archive_retries: 10
+...
+Repaired at: 1629721911103 (08/23/2021 12:31:51)
+Pending repair: --
+...
 </pre>
 
-Here are the configurable properties for full query logging:
+The human-readable date format in the output is a nice touch added in
+version 4.0.
 
-- `log_dir`: Enable full query logging by setting this property to an existing directory location.
-- `roll_cycle`: Sets the frequency at which log segments are rolled - DAILY, HOURLY (the default), or MINUTELY.
-- `block`: Determines whether writes to the full query log will block query completion if full query logging falls behind, defaults to true.
-- `max_queue_weight`: Sets the maximum size of the in-memory queue of full query logs to be written to disk before blocking occurs, defaults to 256 MiB. 
-- `max_log_size`: Sets the maximum size of full query log files on disk (default 16 GiB). After this value is exceeded, the oldest log file will be deleted.
-- `archive_command`: Optionally, provides a command that will be used to archive full query log files before deletion.
-- `max_archive_retries`: Sets a maximum number of times a failed archive command will be retried (defaults to 10).
+Note that, should the repair take a substantial time, you would be able to
+see the SSTable marked as belonging the "pending repair" pool for the duration
+of the repair, with the ID of the running repair displayed in the table metadata:
+<pre class="non-executable-code">
+...
+Repaired at: 0
+Pending repair: 176e98a0-040e-11ec-a1ad-afb77b90bb63
+...
+</pre>
 
-For the new configuration settings in `cassandra.yaml` to take effect, you will need to save the file and restart Cassandra.
 
-In this step, you learned how to enable full query logging in the `cassandra.yaml` file and explored the configurable properties of full query logging. 
+The `nodetool repair_admin` allows one to list current and
+past repair operations, and can be also used to stop a running repair
+(on the same node it is executed on, but also on another node with a `--force`
+option).
+
+✅ Run the following command on the console of Node2 to see the repair you just
+performed (withouth the `--all` flag you would only see currently-running repairs):
+```
+### cassandra2
+docker exec -i -t Cassandra-2 bash -c 'nodetool repair_admin list --all'
+```
+
+✅ You can also query the `system.repairs` table for a history of all repair
+operations run on the cluster: 
+```
+### cassandra2
+docker exec -i -t Cassandra-2 cqlsh -e "
+SELECT parent_id, coordinator, coordinator_port, 
+       last_update, repaired_at, started_at, state, 
+       cfids, participants, participants_wp
+FROM system.repairs;"
+```
+
+Note that this is _not_ a virtual table:
+the contents are accessible from any node in the cluster with no differences.
+
+Has the data really been repaired? Let's check:
+```
+### cassandra1
+docker exec -i -t Cassandra-1 cqlsh -e "
+CONSISTENCY LOCAL_ONE;
+SELECT * FROM chemistry.elements;"
+```
+```
+### cassandra2
+docker exec -i -t Cassandra-2 cqlsh -e "
+CONSISTENCY LOCAL_ONE;
+SELECT * FROM chemistry.elements;"
+```
+
+If you see just a handful of gaseous elements, congratulations! Consistency
+has been successfully restored by bringing the latest changes on the table
+from `Cassandra-1` over to `Cassandra-2`: **incremental repair has done its job**.
+
+To summarize, we have incrementally repaired the table on the `Cassandra-2` node and verified data
+consistency was restored.
+
+Repair is a maintenance operation that has to be executed periodically. Please
+remember that repair is a per-node process: it must be executed on one node
+after the other to ensure the whole cluster is repaired -
+there are, fortunately, tools to automate this process and schedule it in
+a robust way.
 
 <!-- NAVIGATION -->
 <div id="navigation-bottom" class="navigation-bottom">
