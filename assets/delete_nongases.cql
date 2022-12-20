@@ -1,4 +1,5 @@
 USE chemistry;
+CONSISTENCY LOCAL_ONE;
 DELETE FROM elements WHERE symbol = 'Li';
 DELETE FROM elements WHERE symbol = 'Be';
 DELETE FROM elements WHERE symbol = 'B';
