@@ -43,7 +43,7 @@ docker exec -i -t Cassandra-1 nodetool status
 At this point, the cluster should have a single node up - it will still be able
 to accept requests, since we will be using consistency level `LOCAL_ONE` for subsequent writes and reads.
 
-✅ Delete all chemical elements that are _not_ a gas using the provided script:
+✅ Delete all chemical elements that are _not_ a gas using the provided CQL script:
 ```
 ### cassandra1
 docker cp assets/delete_nongases.cql Cassandra-1:/tmp/delete_nongases.cql
