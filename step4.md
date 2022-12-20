@@ -34,7 +34,7 @@ docker exec -i -t Cassandra-2 nodetool repair chemistry elements
 
 Given our extremely small volumes of data (about a hundred rows and a hundred tombstones), 
 it will take a couple of seconds or so. 
-Look for "completed successfully" in the output.
+Look for `Repair completed successfully` in the output.
 
 So it looks like the data was repaired! Since this cluster is running
 Cassandra 4.0, _during_ repair the involved SSTables were kept in a separate
@@ -64,7 +64,7 @@ docker exec -i -t Cassandra-2 bash -c '/opt/cassandra/tools/bin/sstablemetadata 
 You should see that the SSTable is marked as "repaired" in the output, as in:
 <pre class="non-executable-code">
 ...
-Repaired at: 1629721911103 (08/23/2021 12:31:51)
+Repaired at: 1671556732162 (12/20/2022 17:18:52)
 Pending repair: --
 ...
 </pre>
