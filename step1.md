@@ -20,28 +20,82 @@
 
 <!-- CONTENT -->
 
-<div class="step-title">Enable full query logging via nodetool</div>
+<div class="step-title">Create schema and load data</div>
 
-In this step, you will enable full query logging via `nodetool`.
+This lab requires a two-node cluster, that is being created for you.
+The two Cassandra nodes run in Docker containers named `Cassandra-1` and `Cassandra-2`.
+`Cassandra-1` belongs to datacenter `DC-West` and `Cassandra-2` belongs to datacenter `DC-East`.
+The environment has two terminals, `Cassandra-1-terminal` and `Cassandra-2-terminal`, to connect and interact with the respective Cassandra nodes.
 
-We've already started a single node Cassandra cluster for you in the background. When the command prompt appears in the terminal, the node is initialized and ready to go.
 
-✅ First, let's create a directory to store our full query log files:
-```
-mkdir /tmp/fqllogs
-```
+Wait until the terminals report that `Cassandra successfully started` and proceed.
 
-✅ Now you can connect to the node using `nodetool` and enable full query logging, using the directory we just created as the path:
+✅ Verify that the cluster is up and running:
 ```
-nodetool enablefullquerylog --path /tmp/fqllogs
+### cassandra1
+docker exec -i -t Cassandra-1 bash -c 'nodetool status'
 ```
-
-✅ To get a listing of the other options available on this command, execute the following:
 ```
-nodetool help enablefullquerylog
+### cassandra2
+docker exec -i -t Cassandra-2 bash -c 'nodetool status'
 ```
 
-In this step, you enabled full query logging dynamically on a running Cassandra node using `nodetool` and learned about the available options on the `enablefullquerylog` command.
+The output should list _two_ nodes, each in the `UN` (Up, Normal) status.
+
+The following commands can be run on either node - we will work
+on `Cassandra-1`. 
+
+✅ Let's create a keyspace that replicates data to _both nodes_:
+```
+### cassandra1
+docker exec -i -t Cassandra-1 cqlsh -e "
+CREATE KEYSPACE IF NOT EXISTS chemistry
+WITH replication = {
+  'class': 'NetworkTopologyStrategy', 
+  'DC-West': 1,
+  'DC-East': 1 };"
+```
+
+✅ Create a table for storing the periodic table of elements:
+```
+### cassandra1
+docker exec -i -t Cassandra-1 cqlsh -e "
+CREATE TABLE chemistry.elements (
+    symbol TEXT PRIMARY KEY,
+    name TEXT,
+    atomic_mass DECIMAL,
+    atomic_number INT
+);"
+```
+
+✅ Load data from the provided CSV file into the `elements` table:
+```
+### cassandra1
+docker cp assets/elements.csv Cassandra-1:/tmp/elements.csv
+
+docker exec -i -t Cassandra-1 cqlsh -e "
+COPY chemistry.elements FROM '/tmp/elements.csv' WITH HEADER=true;"
+```
+
+✅ Query both `Cassandra-1` and `Cassandra-2` to verify that the data loading has succeeded:
+```
+### cassandra1
+docker exec -i -t Cassandra-1 cqlsh -e "
+CONSISTENCY LOCAL_ONE;
+SELECT * FROM chemistry.elements LIMIT 10;
+SELECT COUNT(*) FROM chemistry.elements;"
+```
+```
+### cassandra2
+docker exec -i -t Cassandra-2 cqlsh -e "
+CONSISTENCY LOCAL_ONE;
+SELECT * FROM chemistry.elements LIMIT 10;
+SELECT COUNT(*) FROM chemistry.elements;"
+```
+
+We have created a table and inserted about a hundred rows in it;
+the table is replicated, in its entirety, on each of the two nodes
+that form the cluster.
 
 <!-- NAVIGATION -->
 <div id="navigation-bottom" class="navigation-bottom">

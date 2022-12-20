@@ -1,0 +1,32 @@
+{
+    "layout": {
+      "terminals": [
+        {
+          "id": "cassandra1",
+          "name": "Cassandra-1-terminal"
+        },
+        {
+          "id": "cassandra2",
+          "name": "Cassandra-2-terminal"
+        }
+      ]
+    },
+    "navigation": {
+      "onLoadCommands": {
+        "intro": {
+          "cassandra1": [
+            {
+              "command": "./wait.sh",
+              "maxInvocations": 1
+            }
+          ],
+          "cassandra2": [
+            {
+              "command": "./wait2.sh",
+              "maxInvocations": 1
+            }
+          ]
+        }
+      }
+    }
+  }
