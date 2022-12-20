@@ -81,7 +81,7 @@ docker exec -i -t Cassandra-1 bash -c 'rm /var/lib/cassandra/hints/*.hints'
 ✅ Bring the `Cassandra-2` node back up:
 ```
 ### cassandra2
-docker start Cassandra-1
+docker start Cassandra-2
 docker exec -i -t Cassandra-2 cassandra -R
 ./wait2.sh
 ```
