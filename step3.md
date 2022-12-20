@@ -82,8 +82,7 @@ docker exec -i -t Cassandra-1 bash -c 'rm /var/lib/cassandra/hints/*.hints'
 ```
 ### cassandra2
 docker start Cassandra-2
-docker exec -i -t Cassandra-2 cassandra -R
-./wait2.sh
+docker exec -i -t Cassandra-2 bash -c 'cassandra -R'
 ```
 
 Wait until Cassandra successfully started.
