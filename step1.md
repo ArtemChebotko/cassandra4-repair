@@ -33,11 +33,11 @@ Wait until the terminals report that `Cassandra successfully started` and procee
 ✅ Verify that the cluster is up and running:
 ```
 ### cassandra1
-docker exec -i -t Cassandra-1 bash -c 'nodetool status'
+docker exec -i -t Cassandra-1 nodetool status
 ```
 ```
 ### cassandra2
-docker exec -i -t Cassandra-2 bash -c 'nodetool status'
+docker exec -i -t Cassandra-2 nodetool status
 ```
 
 The output should list _two_ nodes, each in the `UN` (Up, Normal) status.

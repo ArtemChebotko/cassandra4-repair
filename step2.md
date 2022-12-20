@@ -20,62 +20,63 @@
 
 <!-- CONTENT -->
 
-<div class="step-title">Create schema and perform queries</div>
+<div class="step-title">Flush data to SSTables</div>
 
-In this step, you will connect using `cqlsh` and create a keyspace and table, perform some queries, and verify that full query logs are being created.
+We are about to bring the cluster to the conditions that warrant a data
+repair; but first, we have to make sure all recently-inserted rows, probably
+still lingering in memory (in the memtables), are flushed to disk in the
+form of SSTables.
 
-✅ Start the CQL Shell (`cqlsh`) so you can issue CQL commands:
+✅ Flush data on both nodes:
 ```
-cqlsh
+### cassandra1
+docker exec -i -t Cassandra-1 nodetool flush
 ```
-
-✅ Create the `ks_full_query_logging` keyspace:
 ```
-CREATE KEYSPACE ks_full_query_logging
-WITH replication = {
-  'class': 'NetworkTopologyStrategy', 
-  'DC-Houston': 1 };
-
-USE ks_full_query_logging;
+### cassandra2
+docker exec -i -t Cassandra-2 nodetool flush
 ```
 
-✅ Create the `movie_metadata` table:
+✅ Inspect the data directory where SSTables are flushed:
 ```
-CREATE TABLE movie_metadata(
-  imdb_id        text,
-  overview       text,
-  release_date   text,
-  title          text,
-  average_rating float,
-  PRIMARY KEY(imdb_id));
+### cassandra1
+docker exec -i -t Cassandra-1 bash -c 'ls /var/lib/cassandra/data/chemistry/elements-*/'
 ```
-
-✅ Insert a row into the `movie_metadata` table:
 ```
-INSERT INTO movie_metadata (imdb_id, overview, release_date, title, average_rating) 
-VALUES('tt0114709', 'Led by Woody, Andy''s toys live happily in his room until Andy''s birthday brings Buzz Lightyear onto the scene. Afraid of losing his place in Andy''s heart, Woody plots against Buzz. But when circumstances separate Buzz and Woody from their owner, the duo eventually learns to put aside their differences.', '10/30/95', 'Toy Story', 7.7);
+### cassandra2
+docker exec -i -t Cassandra-2 bash -c 'ls /var/lib/cassandra/data/chemistry/elements-*/'
 ```
 
-✅ Now let's do a `SELECT`:
+You will now see the SSTable files. Notice the files named `*-Data.db`, which contain actual data.
+
+✅ Examine SSTable metadata:
 ```
-SELECT * FROM movie_metadata WHERE imdb_id = 'tt0114709';
+### cassandra1
+docker exec -i -t Cassandra-1 bash -c '/opt/cassandra/tools/bin/sstablemetadata /var/lib/cassandra/data/chemistry/elements-*/*-Data.db'
+```
+```
+### cassandra2
+docker exec -i -t Cassandra-2 bash -c '/opt/cassandra/tools/bin/sstablemetadata /var/lib/cassandra/data/chemistry/elements-*/*-Data.db'
 ```
 
-You should see the row you just inserted.
+Look for the repair information in the output similar to this:
 
-✅ Type `exit` to close `cqlsh`:
-```
-exit
-```
+<pre class="non-executable-code">
+...
+Repaired at: 0
+Pending repair: --
+...
+</pre>
 
-✅ Now, let's check the contents of our log directory to see if anything has been created:
-```
-ls /tmp/fqllogs
-```
+These newly flushed SSTables have never been repaired yet,
+and are not currently in the pending-repair pool of any running repair.
 
-You'll see two files, a file with a date timestamp in the name, and another file which provides a directory of all the dated files that have been written. You can try opening these files if you wish, but the contents won't make a lot of sense since they are binary data. Don't worry, Cassandra has a way to read this data.
+To summarize, we have forced a data flush to disk to make sure our SSTable files
+are up-to-date; indeed the files are there and, as expected, have
+never undergone any repair operation (...yet).
 
-In this step, you have created the `ks_full_query_logging` keyspace and the `movie_metadata` table, and performed some queries, and verified that full query logs were created.
+Now it's time to engineer a data misalignment between the two nodes,
+to later see incremental repair in action!
 
 <!-- NAVIGATION -->
 <div id="navigation-bottom" class="navigation-bottom">
