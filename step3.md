@@ -30,7 +30,7 @@ _hinted handoff_ mechanism to actually achieve data inconsistency.
 ✅ Bring the `Cassandra-2` node down:
 ```
 ### cassandra2
-docker exec -i -t Cassandra-2 bash -c 'pgrep -u cassandra -f cassandra | xargs kill'
+docker exec -i -t Cassandra-2 nodetool stopdaemon
 ```
 
 ✅ When the `Cassandra-2` node is completely offline, it will have a status of `DN` (Down, Normal)
@@ -48,7 +48,7 @@ to accept requests, since we will be using consistency level `LOCAL_ONE` for sub
 ### cassandra1
 docker cp assets/delete_nongases.cql Cassandra-1:/tmp/delete_nongases.cql
 
-docker exec -i -t Cassandra-1 cqlsh -f delete_nongases.cql
+docker exec -i -t Cassandra-1 cqlsh -f /tmp/delete_nongases.cql
 ```
 
 ✅ See which elements are now left in the table:
@@ -75,13 +75,14 @@ IN PRODUCTION as permanent data loss may ensue!
 ✅ Remove all hints stored by `Cassandra-1`:
 ```
 ### cassandra1
-docker exec -i -t Cassandra-1 bash -c 'rm /var/lib/cassandra/data/hints/*.hints'
+docker exec -i -t Cassandra-1 bash -c 'rm /var/lib/cassandra/hints/*.hints'
 ```
 
 ✅ Bring the `Cassandra-2` node back up:
 ```
 ### cassandra2
-docker exec -i -t Cassandra-2 cassandra
+docker start Cassandra-1
+docker exec -i -t Cassandra-2 cassandra -R
 ./wait2.sh
 ```
 
