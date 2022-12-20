@@ -93,7 +93,7 @@ SELECT * FROM chemistry.elements LIMIT 10;
 SELECT COUNT(*) FROM chemistry.elements;"
 ```
 
-We have created a table and inserted about a hundred rows in it;
+To summarize, we have created a table and inserted about a hundred rows in it;
 the table is replicated, in its entirety, on each of the two nodes
 that form the cluster.
 
